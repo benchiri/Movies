@@ -1,0 +1,91 @@
+import { useEffect, useRef, useState } from "react"; import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from "lucide-react"; import { motion } from "framer-motion";
+
+const scenes = [ { title: "Scene 1", setting: "Cyberpunk City", action: "Neon streets glowing", dialogue: "Welcome to PROMPT2FILM", camera: "Wide shot", mood: "Mysterious", duration: 30, video: "/videos/scene1.mp4" }, { title: "Scene 2", setting: "Dark Alley", action: "Rain falling", dialogue: "The story begins", camera: "Tracking shot", mood: "Tense", duration: 30, video: "/videos/scene2.mp4" }, { title: "Scene 3", setting: "High Tech Lab", action: "AI activation", dialogue: "System online", camera: "Close-up", mood: "Intense", duration: 30, video: "/videos/scene3.mp4" }, { title: "Scene 4", setting: "Final Skyline", action: "Explosion of lights", dialogue: "End of film", camera: "Drone shot", mood: "Epic", duration: 30, video: "/videos/scene4.mp4" } ];
+
+function VideoPlayer({ sceneIndex, setSceneIndex }) { const videoRef = useRef(null); const [playing, setPlaying] = useState(true); const [muted, setMuted] = useState(false); const [volume, setVolume] = useState(1); const [loading, setLoading] = useState(true);
+
+const scene = scenes[sceneIndex];
+
+useEffect(() => { const video = videoRef.current; if (!video) return;
+
+video.load();
+video.play().catch(() => {});
+setLoading(true);
+
+const handleLoaded = () => setLoading(false);
+video.addEventListener("loadeddata", handleLoaded);
+
+return () => video.removeEventListener("loadeddata", handleLoaded);
+
+}, [sceneIndex]);
+
+const togglePlay = () => { const video = videoRef.current; if (!video) return; if (playing) video.pause(); else video.play(); setPlaying(!playing); };
+
+const nextScene = () => setSceneIndex((p) => (p + 1) % scenes.length); const prevScene = () => setSceneIndex((p) => (p - 1 + scenes.length) % scenes.length);
+
+return ( <div className="relative w-full h-[70vh] bg-black overflow-hidden rounded-2xl"> {loading && ( <div className="absolute inset-0 flex items-center justify-center text-orange-400 animate-pulse"> Loading cinematic scene... </div> )}
+
+<video
+    ref={videoRef}
+    src={scene.video}
+    className="w-full h-full object-cover"
+    autoPlay
+    muted={muted}
+    loop
+  />
+
+  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+
+  <div className="absolute bottom-0 w-full p-4 text-white">
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+      <h2 className="text-xl font-bold text-orange-400">{scene.title}</h2>
+      <p className="text-sm opacity-80">{scene.dialogue}</p>
+    </motion.div>
+
+    <div className="flex items-center gap-3 mt-3">
+      <button onClick={prevScene}><SkipBack /></button>
+      <button onClick={togglePlay}>{playing ? <Pause /> : <Play />}</button>
+      <button onClick={nextScene}><SkipForward /></button>
+
+      <button onClick={() => setMuted(!muted)}>
+        {muted ? <VolumeX /> : <Volume2 />}
+      </button>
+
+      <input
+        type="range"
+        min="0"
+        max="1"
+        step="0.01"
+        value={volume}
+        onChange={(e) => {
+          const v = parseFloat(e.target.value);
+          setVolume(v);
+          if (videoRef.current) videoRef.current.volume = v;
+        }}
+      />
+    </div>
+  </div>
+</div>
+
+); }
+
+function Timeline({ sceneIndex, setSceneIndex }) { return ( <div className="flex gap-2 mt-4 overflow-x-auto"> {scenes.map((s, i) => ( <button key={i} onClick={() => setSceneIndex(i)} className={px-4 py-2 rounded-lg border ${i === sceneIndex ? "border-orange-500 text-orange-400" : "border-gray-700"}} > {s.title} </button> ))} </div> ); }
+
+function PromptBox() { return ( <div className="mt-6 p-4 bg-gray-900 rounded-xl border border-gray-800"> <h3 className="text-orange-400 font-semibold">AI Prompt</h3> <textarea
+className="w-full mt-2 p-2 bg-black text-white rounded"
+placeholder="Describe your movie..."
+/> </div> ); }
+
+function ExportPanel() { return ( <div className="mt-4 p-4 bg-gray-900 rounded-xl"> <button className="bg-orange-500 px-4 py-2 rounded text-black font-bold"> Export Film </button> </div> ); }
+
+export default function App() { const [sceneIndex, setSceneIndex] = useState(0);
+
+return ( <div className="min-h-screen bg-black text-white p-4"> <h1 className="text-3xl font-bold text-orange-500 mb-4"> PROMPT2FILM </h1>
+
+<VideoPlayer sceneIndex={sceneIndex} setSceneIndex={setSceneIndex} />
+  <Timeline sceneIndex={sceneIndex} setSceneIndex={setSceneIndex} />
+  <PromptBox />
+  <ExportPanel />
+</div>
+
+); }
