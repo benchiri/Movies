@@ -1,86 +1,73 @@
-import { useEffect, useRef, useState } from "react"; import { Play, Pause, Volume2, VolumeX, Maximize, SkipBack, SkipForward } from "lucide-react"; import { motion } from "framer-motion";
+/* ===================================================== PROMPT2FILM — CINEMATIC AI MOVIE GENERATOR (FULL STACK) GitHub-Ready Production Scaffold ===================================================== */
 
-const scenes = [ { title: "Scene 1", setting: "Cyberpunk City", action: "Neon streets glowing", dialogue: "Welcome to PROMPT2FILM", camera: "Wide shot", mood: "Mysterious", duration: 30, video: "/videos/scene1.mp4" }, { title: "Scene 2", setting: "Dark Alley", action: "Rain falling", dialogue: "The story begins", camera: "Tracking shot", mood: "Tense", duration: 30, video: "/videos/scene2.mp4" }, { title: "Scene 3", setting: "High Tech Lab", action: "AI activation", dialogue: "System online", camera: "Close-up", mood: "Intense", duration: 30, video: "/videos/scene3.mp4" }, { title: "Scene 4", setting: "Final Skyline", action: "Explosion of lights", dialogue: "End of film", camera: "Drone shot", mood: "Epic", duration: 30, video: "/videos/scene4.mp4" } ];
+/* ========================= DICTOTYPE SYSTEM HEADER ========================= */
 
-function VideoPlayer({ sceneIndex, setSceneIndex }) { const videoRef = useRef(null); const [playing, setPlaying] = useState(true); const [muted, setMuted] = useState(false); const [volume, setVolume] = useState(1); const [loading, setLoading] = useState(true);
+/**
 
-const scene = scenes[sceneIndex];
+SYSTEM MODE: PROMPT2FILM v1.0
 
-useEffect(() => { const video = videoRef.current; if (!video) return;
+TYPE: AI CINEMATIC VIDEO GENERATOR
 
-video.load();
-video.play().catch(() => {});
-setLoading(true);
+ARCHITECTURE: FULL STACK (React + Node + FFmpeg + AI APIs)
 
-const handleLoaded = () => setLoading(false);
-video.addEventListener("loadeddata", handleLoaded);
+OUTPUT: MULTI-SCENE MP4 FILM GENERATION */
 
-return () => video.removeEventListener("loadeddata", handleLoaded);
 
-}, [sceneIndex]);
+/* ========================= PROJECT STRUCTURE ========================= */
 
-const togglePlay = () => { const video = videoRef.current; if (!video) return; if (playing) video.pause(); else video.play(); setPlaying(!playing); };
+/* prompt2film/ │ ├── client/ │   ├── src/ │   │   ├── components/ │   │   │   ├── VideoPlayer.jsx │   │   │   ├── Timeline.jsx │   │   │   ├── SceneEditor.jsx │   │   │   ├── PromptBox.jsx │   │   │   ├── SoundPanel.jsx │   │   │   ├── ExportPanel.jsx │   │   ├── pages/ │   │   ├── hooks/ │   │   ├── App.jsx │   │   ├── main.jsx │   ├── public/videos/ │ ├── server/ │   ├── routes/ │   │   ├── generate.js │   │   ├── export.js │   │   ├── auth.js │   ├── services/ │   │   ├── ai.js │   │   ├── ffmpeg.js │   │   ├── s3.js │   ├── index.js │ ├── docker-compose.yml ├── README.md */
 
-const nextScene = () => setSceneIndex((p) => (p + 1) % scenes.length); const prevScene = () => setSceneIndex((p) => (p - 1 + scenes.length) % scenes.length);
+/* ========================= BACKEND CORE (Express) ========================= */
 
-return ( <div className="relative w-full h-[70vh] bg-black overflow-hidden rounded-2xl"> {loading && ( <div className="absolute inset-0 flex items-center justify-center text-orange-400 animate-pulse"> Loading cinematic scene... </div> )}
+// server/index.js import express from "express"; import cors from "cors"; import generate from "./routes/generate.js"; import exportRoute from "./routes/export.js"; import auth from "./routes/auth.js";
 
-<video
-    ref={videoRef}
-    src={scene.video}
-    className="w-full h-full object-cover"
-    autoPlay
-    muted={muted}
-    loop
-  />
+const app = express(); app.use(cors()); app.use(express.json());
 
-  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+app.use("/api/generate", generate); app.use("/api/export", exportRoute); app.use("/api/auth", auth);
 
-  <div className="absolute bottom-0 w-full p-4 text-white">
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-      <h2 className="text-xl font-bold text-orange-400">{scene.title}</h2>
-      <p className="text-sm opacity-80">{scene.dialogue}</p>
-    </motion.div>
+app.listen(5000, () => console.log("PROMPT2FILM SERVER RUNNING"));
 
-    <div className="flex items-center gap-3 mt-3">
-      <button onClick={prevScene}><SkipBack /></button>
-      <button onClick={togglePlay}>{playing ? <Pause /> : <Play />}</button>
-      <button onClick={nextScene}><SkipForward /></button>
+/* ========================= AI SCENE GENERATION ========================= */
 
-      <button onClick={() => setMuted(!muted)}>
-        {muted ? <VolumeX /> : <Volume2 />}
-      </button>
+// server/routes/generate.js import express from "express"; const router = express.Router();
 
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.01"
-        value={volume}
-        onChange={(e) => {
-          const v = parseFloat(e.target.value);
-          setVolume(v);
-          if (videoRef.current) videoRef.current.volume = v;
-        }}
-      />
-    </div>
-  </div>
-</div>
+router.post("/", async (req, res) => { const { prompt } = req.body;
 
-); }
+// PLUG HERE: // OpenAI GPT → script breakdown // RunwayML / Pika → video generation
 
-function Timeline({ sceneIndex, setSceneIndex }) { return ( <div className="flex gap-2 mt-4 overflow-x-auto"> {scenes.map((s, i) => ( <button key={i} onClick={() => setSceneIndex(i)} className={px-4 py-2 rounded-lg border ${i === sceneIndex ? "border-orange-500 text-orange-400" : "border-gray-700"}} > {s.title} </button> ))} </div> ); }
+const scenes = Array.from({ length: 4 }).map((_, i) => ({ id: i, title: Scene ${i + 1}, setting: "AI World", action: "Generated cinematic motion", dialogue: prompt, camera: "Dynamic", mood: "Epic", duration: 30, video: /videos/scene${i + 1}.mp4 }));
 
-function PromptBox() { return ( <div className="mt-6 p-4 bg-gray-900 rounded-xl border border-gray-800"> <h3 className="text-orange-400 font-semibold">AI Prompt</h3> <textarea
-className="w-full mt-2 p-2 bg-black text-white rounded"
-placeholder="Describe your movie..."
-/> </div> ); }
+res.json({ scenes }); });
 
-function ExportPanel() { return ( <div className="mt-4 p-4 bg-gray-900 rounded-xl"> <button className="bg-orange-500 px-4 py-2 rounded text-black font-bold"> Export Film </button> </div> ); }
+export default router;
+
+/* ========================= VIDEO EXPORT ENGINE (FFMPEG) ========================= */
+
+// server/routes/export.js import express from "express"; import { exec } from "child_process"; import fs from "fs";
+
+const router = express.Router();
+
+router.post("/", (req, res) => { const cmd = ffmpeg -y \ -i public/videos/scene1.mp4 \ -i public/videos/scene2.mp4 \ -i public/videos/scene3.mp4 \ -i public/videos/scene4.mp4 \ -filter_complex concat=n=4:v=1:a=0 \ output/final.mp4;
+
+exec(cmd, (err) => { if (err) return res.status(500).send(err); res.json({ success: true, url: "/output/final.mp4" }); }); });
+
+export default router;
+
+/* ========================= CLOUD STORAGE (AWS S3) ========================= */
+
+// server/services/s3.js import AWS from "aws-sdk";
+
+const s3 = new AWS.S3({ accessKeyId: process.env.AWS_KEY, secretAccessKey: process.env.AWS_SECRET });
+
+export async function upload(file, name) { return await s3.upload({ Bucket: "prompt2film", Key: name, Body: file }).promise(); }
+
+/* ========================= FRONTEND CORE (React) ========================= */
+
+// client/src/App.jsx import { useState } from "react"; import VideoPlayer from "./components/VideoPlayer"; import Timeline from "./components/Timeline"; import PromptBox from "./components/PromptBox"; import ExportPanel from "./components/ExportPanel";
 
 export default function App() { const [sceneIndex, setSceneIndex] = useState(0);
 
-return ( <div className="min-h-screen bg-black text-white p-4"> <h1 className="text-3xl font-bold text-orange-500 mb-4"> PROMPT2FILM </h1>
+return ( <div className="bg-black text-white min-h-screen p-4"> <h1 className="text-3xl text-orange-500 font-bold"> PROMPT2FILM </h1>
 
 <VideoPlayer sceneIndex={sceneIndex} setSceneIndex={setSceneIndex} />
   <Timeline sceneIndex={sceneIndex} setSceneIndex={setSceneIndex} />
@@ -89,3 +76,119 @@ return ( <div className="min-h-screen bg-black text-white p-4"> <h1 className="t
 </div>
 
 ); }
+
+/* ========================= VIDEO PLAYER (REAL MP4) ========================= */
+
+// client/src/components/VideoPlayer.jsx import { useEffect, useRef, useState } from "react"; import { Play, Pause, Volume2 } from "lucide-react";
+
+const scenes = [ "/videos/scene1.mp4", "/videos/scene2.mp4", "/videos/scene3.mp4", "/videos/scene4.mp4" ];
+
+export default function VideoPlayer({ sceneIndex, setSceneIndex }) { const ref = useRef(); const [playing, setPlaying] = useState(true);
+
+useEffect(() => { ref.current.load(); ref.current.play(); }, [sceneIndex]);
+
+return ( <div className="relative"> <video
+ref={ref}
+src={scenes[sceneIndex]}
+className="w-full rounded-xl"
+autoPlay
+loop
+muted
+/>
+
+<button onClick={() => setPlaying(!playing)}>
+    {playing ? <Pause /> : <Play />}
+  </button>
+</div>
+
+); }
+
+/* ========================= TIMELINE ========================= */
+
+// client/src/components/Timeline.jsx export default function Timeline({ sceneIndex, setSceneIndex }) { return ( <div className="flex gap-2 mt-4"> {[0,1,2,3].map(i => ( <button key={i} onClick={() => setSceneIndex(i)} className={i === sceneIndex ? "text-orange-400" : ""} > Scene {i+1} </button> ))} </div> ); }
+
+/* ========================= PROMPT BOX ========================= */
+
+// client/src/components/PromptBox.jsx export default function PromptBox() { return ( <textarea
+className="w-full mt-4 p-2 bg-gray-900 text-white"
+placeholder="Describe your movie..."
+/> ); }
+
+/* ========================= EXPORT PANEL ========================= */
+
+// client/src/components/ExportPanel.jsx export default function ExportPanel() { async function exportFilm() { const res = await fetch("/api/export", { method: "POST" }); const data = await res.json(); alert("Export ready: " + data.url); }
+
+return ( <button
+onClick={exportFilm}
+className="bg-orange-500 text-black px-4 py-2 mt-4"
+> Export Film </button> ); }
+
+/* ========================= AI PIPELINE (REAL UPGRADE PATH) ========================= */
+
+/* PROMPT → GPT (script) → Scene breakdown → Runway / Pika API (video gen) → MP4 storage → FFmpeg stitching → S3 upload → final movie link */
+
+/* ===================================================== PROMPT2FILM — SAAS PRODUCTION UPGRADE LAYER ===================================================== */
+
+/* ========================= AUTH SYSTEM (JWT) ========================= */
+
+// server/routes/auth.js import express from "express"; import jwt from "jsonwebtoken";
+
+const router = express.Router();
+
+router.post("/login", (req, res) => { const { email } = req.body;
+
+// DEMO AUTH (replace with DB) const token = jwt.sign({ email }, process.env.JWT_SECRET);
+
+res.json({ token }); });
+
+export default router;
+
+/* ========================= DATABASE LAYER (MongoDB) ========================= */
+
+/* MODELS:
+
+Users
+
+Projects
+
+Scenes
+
+Exports */
+
+
+// Example schema idea: // User { email, passwordHash, projects[] } // Project { title, prompt, scenes[], status }
+
+/* ========================= STRIPE PAYMENTS (SA
+
+/* ===================================================== PROMPT2FILM — SAAS PRODUCTION UPGRADE LAYER ===================================================== */
+
+/* ========================= AUTH SYSTEM (JWT) ========================= */
+
+// server/routes/auth.js import express from "express"; import jwt from "jsonwebtoken";
+
+const router = express.Router();
+
+router.post("/login", (req, res) => { const { email } = req.body;
+
+// DEMO AUTH (replace with DB) const token = jwt.sign({ email }, process.env.JWT_SECRET);
+
+res.json({ token }); });
+
+export default router;
+
+/* ========================= DATABASE LAYER (MongoDB) ========================= */
+
+/* MODELS:
+
+Users
+
+Projects
+
+Scenes
+
+Exports */
+
+
+// Example schema idea: // User { email, passwordHash, projects[] } // Project { title, prompt, scenes[], status }
+
+/* ========================= STRIPE PAYMENTS (SA
